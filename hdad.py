@@ -109,9 +109,11 @@ def display(info, stats):
     output = str(df).split('\n', 1)[1]
 
     print(f'Displaying data...\n\n{output}')
-    return
+    return None
 
-try:# Run
+
+try :
+
     print(f'Starting {script} {version}\n')
     
     teams = get_teams()
@@ -122,18 +124,15 @@ try:# Run
     players = get_players(teamlink)
     
     while True:
-        try:
-            playerlink = pick_player(players, teamname)
-            info = player_info(playerlink)
-            stats = player_stats(playerlink)
-            display(info, stats)
+        playerlink = pick_player(players, teamname)
+        info = player_info(playerlink)
+        stats = player_stats(playerlink)
+        display(info, stats)
+
     
-        except KeyboardInterrupt:
-            print('\nInterrupt signal received. Exiting.')
-            break
-    
-        except:
-            raise
+except KeyboardInterrupt:
+    print('\nInterrupt signal received. Exiting.')
+    exit()
 
 except Exception as e:
     raise
