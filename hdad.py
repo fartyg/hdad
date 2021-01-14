@@ -3,14 +3,15 @@ import requests
 import pandas as pd
 
 script = 'Hockeydad (hdad)'
-version = 'v0.2'
+version = 'v0.21'
+season = '20202021'
 
 #Documentation on NHL api: https://gitlab.com/dword4/nhlapi
 domain = 'https://statsapi.web.nhl.com'
-api = '/api/v1'
-view = '/teams'
-subview = '/roster'
-modifier = '/stats?stats=statsSingleSeason&season=20192020'
+api = 'api/v1'
+view = 'teams'
+subview = 'roster'
+modifier = f'stats?stats=statsSingleSeason&season={season}'
 unwantedkeys = ('positionCode', 'positionAbbreviation', 'id', 'link', \
                 'active', 'alternateCaptain', 'rosterStatus', 'teamLink', \
                 'teamId', 'primaryNumber', 'firstName', 'lastName', \
@@ -21,81 +22,116 @@ def call(url):
     return r.json()
 
 def get_teams():
-    url = domain + api + view
+    url = f'{domain}/{api}/{view}'
     jr = call(url)
+
     keys = 0
-    teamdict = {}
+    teams = {}
     for team in jr['teams']:
         keys = keys + 1
-        links = team['link']
-        names = team['name']
-        values = (links, names)
-        teamdict[keys] = values
-    return teamdict
+        values = (team['link'], team['name'])
+        teams[keys] = values
 
-def pick_team(teamdict):
-    teaminp = int(input('\nChoose a team number...\n>>> '))
-    print(str(teamdict[teaminp][1]) + ' chosen.')
-    teamlink = teamdict[teaminp][0]
+    return teams
+
+def pick_team(teams):
+    inpmsg = '\nChoose a team number...\n>>> '
+
+    while True:
+        choice = int(input(inpmsg))
+        if choice in teams.keys():
+            break
+        else:
+            print('Invalid input. Please try again.')
+
+    print(f'{teams[choice][1]} chosen.')
+
+    teamlink = teams[choice][0]
     return teamlink
 
-def player_by_jersey(teamlink):
-    jninp = input('\nChoose a jersey number...\n>>> ')
-    url = domain + teamlink + subview
+def get_players(teamlink):
+    url = f'{domain}/{teamlink}/{subview}'
     jr = call(url)
     roster = jr['roster']
-    jndict = {}
-    for item in roster:
-        keys = item['jerseyNumber']
-        values = item['person']
-        jndict[keys] = values
-    jndict = jndict.get(jninp)
-    return jndict['link']
+
+    players = {}
+    for player in roster:
+        keys = int(player['jerseyNumber'])
+        values = player['person']
+        players[keys] = values
+
+    return players
+
+def pick_player(players):
+    inpmsg = '\nChoose a jersey number...\n>>> '
+    while True:
+        choice = int(input(inpmsg))
+        if choice in players.keys():
+            break
+        else:
+            print('Invalid input. Please try again.')
+
+    pname = players[choice]['fullName']
+    print(f'{pname} chosen.')
+
+    playerlink = players.get(choice)['link']
+    return playerlink
 
 def player_info(playerlink):
-    url = domain + playerlink
+    url = f'{domain}/{playerlink}'
     jr = call(url)
+
     players = jr['people'][0]
-    curteam = players['currentTeam']
-    curteam = {f'team{k.title()}': v for k, v in curteam.items()}
-    primpos = players['primaryPosition']
-    primpos = {f'position{k.title()}': v for k, v in primpos.items()}
+    ct = players['currentTeam']
+    curteam = {f'team{k.title()}': v for k, v in ct.items()}
+
+    ppos = players['primaryPosition']
+    primpos = {f'position{k.title()}': v for k, v in ppos.items()}
+
     info = {**players, **curteam, **primpos}
     return info
 
 def player_stats(playerlink):
-    url = domain + playerlink + modifier
+    url = f'{domain}/{playerlink}/{modifier}'
     jr = call(url)
-    stats = jr['stats'][0]
-    splits = stats['splits'][0]
-    stats =  splits['stat']
+
+    st = jr['stats'][0]
+    sp = st['splits'][0]
+    stats =  sp['stat']
+
     return stats
 
 def display(info, stats):
     merge = {**info, **stats}
     clean = {k: v for k, v in merge.items() \
             if not k.startswith(unwantedkeys)}
+
     df = pd.DataFrame.from_dict(clean, orient='index')
-    output = str(df).split('\n',1)[1]
-    print('Displaying data...')
-    print('\n' + output)
+    output = str(df).split('\n', 1)[1]
 
-#Run
-print(script + ' ' + version + '\n')
-teamdict = get_teams()
-for k,v in teamdict.items():
-    print('Team ' + str(k) + ': ' + str(v[1]))
+    print('Displaying data...\n')
+    print(output)
 
-teamlink = pick_team(teamdict)
+
+print(f'Starting {script} {version}\n')
+
+teams = get_teams()
+for k,v in teams.items():
+    print(f'Team {k}: {v[1]}')
+
+teamlink = pick_team(teams)
+players = get_players(teamlink)
 
 while True:
     try:
-        playerlink = player_by_jersey(teamlink)
+        playerlink = pick_player(players)
         info = player_info(playerlink)
         stats = player_stats(playerlink)
         display(info, stats)
+
     except KeyboardInterrupt:
         print('\nInterrupt signal received. Exiting.')
         break
-    except KeyError:
-        print('Invalid input. Please try again...')
+
+    except Exception as e:
+        raise
