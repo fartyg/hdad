@@ -44,10 +44,9 @@ def pick_team(teams):
         else:
             print('Invalid input. Please try again.')
 
-    print(f'{teams[choice][1]} chosen.')
-
     teamlink = teams[choice][0]
-    return teamlink
+    teamname = teams[choice][1]
+    return teamlink, teamname
 
 def get_players(teamlink):
     url = f'{domain}/{teamlink}/{subview}'
@@ -62,17 +61,17 @@ def get_players(teamlink):
 
     return players
 
-def pick_player(players):
-    inpmsg = '\nChoose a jersey number...\n>>> '
+def pick_player(players, teamname):
+    inpmsg = f'\nChoose a jersey number in {teamname}...\n>>> '
     while True:
         choice = int(input(inpmsg))
         if choice in players.keys():
             break
         else:
-            print('Invalid input. Please try again.')
+            print(f'No number {choice} found in {teamname}')
 
     pname = players[choice]['fullName']
-    print(f'{pname} chosen.')
+    print(f'\n{pname} chosen.')
 
     playerlink = players.get(choice)['link']
     return playerlink
@@ -109,29 +108,32 @@ def display(info, stats):
     df = pd.DataFrame.from_dict(clean, orient='index')
     output = str(df).split('\n', 1)[1]
 
-    print('Displaying data...\n')
-    print(output)
+    print(f'Displaying data...\n\n{output}')
+    return
 
+try:# Run
+    print(f'Starting {script} {version}\n')
+    
+    teams = get_teams()
+    for k,v in teams.items():
+        print(f'Team {k}: {v[1]}')
+    
+    teamlink, teamname = pick_team(teams)
+    players = get_players(teamlink)
+    
+    while True:
+        try:
+            playerlink = pick_player(players, teamname)
+            info = player_info(playerlink)
+            stats = player_stats(playerlink)
+            display(info, stats)
+    
+        except KeyboardInterrupt:
+            print('\nInterrupt signal received. Exiting.')
+            break
+    
+        except:
+            raise
 
-print(f'Starting {script} {version}\n')
-
-teams = get_teams()
-for k,v in teams.items():
-    print(f'Team {k}: {v[1]}')
-
-teamlink = pick_team(teams)
-players = get_players(teamlink)
-
-while True:
-    try:
-        playerlink = pick_player(players)
-        info = player_info(playerlink)
-        stats = player_stats(playerlink)
-        display(info, stats)
-
-    except KeyboardInterrupt:
-        print('\nInterrupt signal received. Exiting.')
-        break
-
-    except Exception as e:
-        raise
+except Exception as e:
+    raise
