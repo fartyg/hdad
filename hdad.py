@@ -23,11 +23,11 @@ def call(url):
 
 def get_teams():
     url = f'{domain}/{api}/{view}'
-    jr = call(url)
+    r = call(url)
 
     keys = 0
     teams = {}
-    for team in jr['teams']:
+    for team in r['teams']:
         keys = keys + 1
         values = (team['link'], team['name'])
         teams[keys] = values
@@ -50,8 +50,8 @@ def pick_team(teams):
 
 def get_players(teamlink):
     url = f'{domain}/{teamlink}/{subview}'
-    jr = call(url)
-    roster = jr['roster']
+    r = call(url)
+    roster = r['roster']
 
     players = {}
     for player in roster:
@@ -78,9 +78,9 @@ def pick_player(players, teamname):
 
 def player_info(playerlink):
     url = f'{domain}/{playerlink}'
-    jr = call(url)
+    r = call(url)
 
-    players = jr['people'][0]
+    players = r['people'][0]
     ct = players['currentTeam']
     curteam = {f'team{k.title()}': v for k, v in ct.items()}
 
@@ -92,28 +92,25 @@ def player_info(playerlink):
 
 def player_stats(playerlink):
     url = f'{domain}/{playerlink}/{modifier}'
-    jr = call(url)
+    r = call(url)
 
-    st = jr['stats'][0]
+    st = r['stats'][0]
     sp = st['splits'][0]
     stats =  sp['stat']
 
     return stats
 
-def display(info, stats):
+def create_output(info, stats):
     merge = {**info, **stats}
     clean = {k: v for k, v in merge.items() \
             if not k.startswith(unwantedkeys)}
-
     df = pd.DataFrame.from_dict(clean, orient='index')
-    output = str(df).split('\n', 1)[1]
 
-    print(f'Displaying data...\n\n{output}')
-    return None
+    output = str(df).split('\n', 1)[1]
+    return output
 
 
 try :
-
     print(f'Starting {script} {version}\n')
     
     teams = get_teams()
@@ -127,9 +124,9 @@ try :
         playerlink = pick_player(players, teamname)
         info = player_info(playerlink)
         stats = player_stats(playerlink)
-        display(info, stats)
+        output = create_output(info, stats)
+        print(output)
 
-    
 except KeyboardInterrupt:
     print('\nInterrupt signal received. Exiting.')
     exit()
