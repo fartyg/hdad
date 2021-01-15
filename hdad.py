@@ -14,9 +14,9 @@ subview = 'roster'
 season = '20202021'
 mod = f'stats?stats=statsSingleSeason&season={season}'
 exclude = ('positionCode', 'positionAbbreviation', 'id', 'link', \
-                'active', 'alternateCaptain', 'rosterStatus', 'tlink', \
+                'active', 'alternateCaptain', 'rosterStatus', 'teamLink', \
                 'teamId', 'primaryNumber', 'firstName', 'lastName', \
-                'currentTeam', 'primaryPosition')
+                'currentTeam', 'primaryPosition', 'teamName')
 
 def call(url):
     r = requests.get(url)
@@ -45,9 +45,10 @@ def pick_team(teams):
         else:
             print(f'\nInvalid input. Please try again...')
 
-    tlink = teams[choice][0]
     tname = teams[choice][1]
     print(f'{tname} chosen.')
+
+    tlink = teams[choice][0]
     return tlink, tname
 
 def get_players(tlink):
@@ -74,7 +75,7 @@ def pick_player(players, tname):
             print(f'\nNo number {choice} in {tname}. Try again...')
 
     pname = players[choice]['fullName']
-    print(f'\n{pname} chosen.')
+    print(f'{pname} chosen.')
 
     plink = players.get(choice)['link']
     return plink
@@ -99,7 +100,7 @@ def player_stats(plink):
 
     st = r['stats'][0]
     sp = st['splits'][0]
-    stats =  sp['stat']
+    stats = sp['stat']
 
     return stats
 
@@ -134,5 +135,5 @@ except KeyboardInterrupt:
     print('\nInterrupt signal received. Exiting.')
     exit()
 
-except Exception as e:
+except :
     raise
