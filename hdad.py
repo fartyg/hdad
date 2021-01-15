@@ -2,18 +2,19 @@
 import requests
 import pandas as pd
 
-script = 'Hockeydad (hdad)'
+script = 'hdad'
 version = 'v0.21'
-season = '20202021'
+prompt = '\n>>> '
 
 #Documentation on NHL api: https://gitlab.com/dword4/nhlapi
 domain = 'https://statsapi.web.nhl.com'
 api = 'api/v1'
 view = 'teams'
 subview = 'roster'
-modifier = f'stats?stats=statsSingleSeason&season={season}'
-unwantedkeys = ('positionCode', 'positionAbbreviation', 'id', 'link', \
-                'active', 'alternateCaptain', 'rosterStatus', 'teamLink', \
+season = '20202021'
+mod = f'stats?stats=statsSingleSeason&season={season}'
+exclude = ('positionCode', 'positionAbbreviation', 'id', 'link', \
+                'active', 'alternateCaptain', 'rosterStatus', 'tlink', \
                 'teamId', 'primaryNumber', 'firstName', 'lastName', \
                 'currentTeam', 'primaryPosition')
 
@@ -35,21 +36,22 @@ def get_teams():
     return teams
 
 def pick_team(teams):
-    inpmsg = '\nChoose a team number...\n>>> '
+    inpmsg = f'\nChoose a team number...{prompt}'
 
     while True:
         choice = int(input(inpmsg))
         if choice in teams.keys():
             break
         else:
-            print('Invalid input. Please try again.')
+            print(f'\nInvalid input. Please try again...')
 
-    teamlink = teams[choice][0]
-    teamname = teams[choice][1]
-    return teamlink, teamname
+    tlink = teams[choice][0]
+    tname = teams[choice][1]
+    print(f'{tname} chosen.')
+    return tlink, tname
 
-def get_players(teamlink):
-    url = f'{domain}/{teamlink}/{subview}'
+def get_players(tlink):
+    url = f'{domain}/{tlink}/{subview}'
     r = call(url)
     roster = r['roster']
 
@@ -61,23 +63,24 @@ def get_players(teamlink):
 
     return players
 
-def pick_player(players, teamname):
-    inpmsg = f'\nChoose a jersey number in {teamname}...\n>>> '
+def pick_player(players, tname):
+    inpmsg = f'\nChoose a jersey number in {tname}...{prompt}'
+
     while True:
         choice = int(input(inpmsg))
         if choice in players.keys():
             break
         else:
-            print(f'No number {choice} found in {teamname}')
+            print(f'\nNo number {choice} in {tname}. Try again...')
 
     pname = players[choice]['fullName']
     print(f'\n{pname} chosen.')
 
-    playerlink = players.get(choice)['link']
-    return playerlink
+    plink = players.get(choice)['link']
+    return plink
 
-def player_info(playerlink):
-    url = f'{domain}/{playerlink}'
+def player_info(plink):
+    url = f'{domain}/{plink}'
     r = call(url)
 
     players = r['people'][0]
@@ -90,8 +93,8 @@ def player_info(playerlink):
     info = {**players, **curteam, **primpos}
     return info
 
-def player_stats(playerlink):
-    url = f'{domain}/{playerlink}/{modifier}'
+def player_stats(plink):
+    url = f'{domain}/{plink}/{mod}'
     r = call(url)
 
     st = r['stats'][0]
@@ -103,7 +106,7 @@ def player_stats(playerlink):
 def create_output(info, stats):
     merge = {**info, **stats}
     clean = {k: v for k, v in merge.items() \
-            if not k.startswith(unwantedkeys)}
+            if not k.startswith(exclude)}
     df = pd.DataFrame.from_dict(clean, orient='index')
 
     output = str(df).split('\n', 1)[1]
@@ -117,13 +120,13 @@ try :
     for k,v in teams.items():
         print(f'Team {k}: {v[1]}')
     
-    teamlink, teamname = pick_team(teams)
-    players = get_players(teamlink)
+    tlink, tname = pick_team(teams)
+    players = get_players(tlink)
     
     while True:
-        playerlink = pick_player(players, teamname)
-        info = player_info(playerlink)
-        stats = player_stats(playerlink)
+        plink = pick_player(players, tname)
+        info = player_info(plink)
+        stats = player_stats(plink)
         output = create_output(info, stats)
         print(output)
 
