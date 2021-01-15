@@ -114,7 +114,7 @@ def create_output(info, stats):
     return output
 
 
-try :
+try:
     print(f'Starting {script} {version}\n')
     
     teams = get_teams()
@@ -135,5 +135,5 @@ except KeyboardInterrupt:
     print('\nInterrupt signal received. Exiting.')
     exit()
 
-except :
+except:
     raise
