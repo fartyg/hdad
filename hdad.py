@@ -6,7 +6,7 @@ script = 'hdad'
 version = 'v0.21'
 prompt = '\n>>> '
 
-#Documentation on NHL api: https://gitlab.com/dword4/nhlapi
+# Documentation on NHL api: https://gitlab.com/dword4/nhlapi
 domain = 'https://statsapi.web.nhl.com'
 api = 'api/v1'
 view = 'teams'
@@ -14,9 +14,9 @@ subview = 'roster'
 season = '20202021'
 mod = f'stats?stats=statsSingleSeason&season={season}'
 exclude = ('positionCode', 'positionAbbreviation', 'id', 'link', \
-                'active', 'alternateCaptain', 'rosterStatus', 'teamLink', \
-                'teamId', 'primaryNumber', 'firstName', 'lastName', \
-                'currentTeam', 'primaryPosition', 'teamName')
+            'active', 'alternateCaptain', 'rosterStatus', 'teamLink', \
+            'teamId', 'primaryNumber', 'firstName', 'lastName', \
+            'currentTeam', 'primaryPosition', 'teamName')
 
 def call(url):
     r = requests.get(url)
